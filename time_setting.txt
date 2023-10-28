@@ -1,4 +1,4 @@
-Set the Board object's time_setting variable according to the board's Date Format in the Admin CP.
+Set the Forum object's time_setting variable according to the board's Date Format in the Admin CP.
 
 For now, Display Seconds must always be ON and Relative Time must always be OFF for any time-parsing related functions to work.
 

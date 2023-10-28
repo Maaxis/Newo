@@ -9,6 +9,16 @@ import org
 
 class Forum:
     def __init__(self, subdomain: str, time_setting: int = 1, posts_per_page: int = 15, users = None, bot = None):
+        """
+        Initializes a new instance of the MyClass class.
+
+        Args:
+            subdomain (str): The subdomain for the MyClass instance.
+            time_setting (int, optional): The time setting for MyClass. Defaults to 1.
+            posts_per_page (int, optional): The number of posts per page for MyClass. Defaults to 15.
+            users (type, optional): A parameter description for users. Defaults to None.
+            bot (type, optional): A parameter description for bot. Defaults to None.
+        """
         self.subdomain = subdomain
         self.driver = start_driver()
         self.time_setting = time_setting  # see time_setting.txt for how to set this correctly
@@ -19,6 +29,19 @@ class Forum:
 
 class User:
     def __init__(self, subdomain: str, id: int = None, username: str = None, password: str = None, masks: list[str] = None, avatar: str = None, display_name: str = None, group: str = None):
+        """
+        Initializes a new instance of the class.
+
+        Parameters:
+            subdomain (str): The subdomain for the instance.
+            id (int, optional): The ID for the instance. Defaults to None.
+            username (str, optional): The username for the instance. Defaults to None.
+            password (str, optional): The password for the instance. Defaults to None.
+            masks (list[str], optional): The masks for the instance. Defaults to None.
+            avatar (str, optional): The avatar for the instance. Defaults to None.
+            display_name (str, optional): The display name for the instance. Defaults to None.
+            group (str, optional): The group for the instance. Defaults to None.
+        """
         self.subdomain = subdomain
         self.id = id  # id is not required since we can also premake the object for preregistering
         self.username = username
@@ -52,6 +75,12 @@ class Bot(User):
 
 
 def start_driver():
+    """
+    Starts the web driver and navigates to the Google homepage.
+
+    Returns:
+        driver (WebDriver): The initialized WebDriver object.
+    """
     chrome_options = Options()
     chrome_options.add_argument('--no-sandbox')
     chrome_options.add_argument('--use-gl=desktop')
@@ -68,6 +97,18 @@ def setup():  # use this for first-time logins
 
 
 def login(forum, user, admin=False):
+    """
+    Logs in to the forum using the provided credentials.
+
+    Args:
+        forum (Forum): The forum object representing the forum to log in to.
+        user (User): The user object representing the user to log in as.
+        admin (bool, optional): A flag indicating whether to log in to the Admin CP.
+            Defaults to False.
+
+    Returns:
+        None
+    """
     driver = forum.driver
     if admin:
         driver.get(forum.url + '/Admin/admincp.asp')
@@ -83,6 +124,16 @@ def login(forum, user, admin=False):
 
 
 def navigate_forum(forum: Forum, forum_id):
+    """
+    Navigates to a specific forum in the provided Forum object.
+
+    Args:
+        forum (Forum): The Forum object containing the necessary driver and URL.
+        forum_id (int): The ID of the forum to navigate to.
+
+    Returns:
+        None
+    """
     driver = forum.driver
     url = forum.url + '/forum.asp?forumid=' + str(forum_id)
     driver.get(url)
@@ -92,7 +143,26 @@ def make_thread(forum: Forum, forum_id: int, thread_title: str, post_content: st
                 locked: bool = False,
                 pinned: bool = False,
                 poll: bool = False, poll_question: str = "", poll_options: [str] = None, poll_num_of_options: int = 0,
-                poll_num_of_votes: int = 0):  # TODO: set up polls
+                poll_num_of_votes: int = 0):
+    """
+    Creates a new thread in the specified forum with the given parameters.
+
+    Args:
+        forum (Forum): The forum object representing the forum where the thread will be created.
+        forum_id (int): The ID of the forum where the thread will be created.
+        thread_title (str): The title of the new thread.
+        post_content (str): The content of the initial post in the thread.
+        thread_description (str, optional): The description of the new thread (default: "").
+        locked (bool, optional): Whether the new thread should be locked (default: False).
+        pinned (bool, optional): Whether the new thread should be pinned (default: False).
+        poll (bool, optional): Whether the new thread should have a poll (default: False).
+        poll_question (str, optional): The question for the poll (default: "").
+        poll_options (list[str], optional): The options for the poll (default: None).
+        poll_num_of_options (int, optional): The number of options for the poll (default: 0).
+        poll_num_of_votes (int, optional): The number of votes for the poll (default: 0).
+
+    TODO: set up polls
+    """
     driver = forum.driver
     driver.get(forum.url + '/newthread.asp?forumid=' + str(forum_id))
     title_box = driver.find_element(By.XPATH,
@@ -129,6 +199,21 @@ def navigate_thread(forum, thread_id):
 
 
 def make_post(forum, post_content, thread_id = None):
+    """
+    Make a post on a forum.
+
+    Args:
+        forum: The forum object.
+        post_content: The content of the post.
+        thread_id: (optional) The ID of the thread to post in. If left blank, it will attempt to
+            post on the current page.
+
+    Returns:
+        None
+
+    Note:
+        The thread URL is constructed using the forum subdomain and the thread ID.
+    """
     driver = forum.driver
     thread = f"ndimforums.com/{forum.subdomain}/thread.asp?threadid={thread_id}"
     if (thread_id) and (thread not in driver.current_url):
@@ -145,9 +230,22 @@ def read_post(forum, thread_id, post_num):
 
 ###---ADMIN CP---###
 
+def goto_admin_cp(forum):
+    if '/Admin/admincp.asp' not in forum.driver.current_url:
+        login(forum, forum.bot, admin=True)
 
-def navigate_masks(forum):
-    login(forum, forum.bot, admin=True)
+
+def navigate_masks(forum: Forum):
+    """
+    Navigates to the mask page on the specified forum.
+
+    Args:
+        forum (Forum): The name of the forum to navigate to.
+
+    Returns:
+        None
+    """
+    goto_admin_cp(forum)
     driver = forum.driver
     mask_page = driver.find_element(By.LINK_TEXT, "Forum Masks")
     mask_page.send_keys(Keys.ENTER)
@@ -156,6 +254,17 @@ def navigate_masks(forum):
 
 
 def create_mask(forum, mask_name, dictionary):
+    """
+    Create a mask in the forum.
+
+    Args:
+        forum (Forum): The forum object.
+        mask_name (str): The name of the mask to be created.
+        dictionary (dict): A dictionary containing the mask values.
+
+    Returns:
+        None
+    """
     navigate_masks(forum)
     driver = forum.driver
     # test_dict = {
@@ -174,8 +283,27 @@ def create_mask(forum, mask_name, dictionary):
 
 
 def edit_mask(forum, mask_name, dictionary, overwrite=False):
+    """
+    Edits a mask on the forum.
+
+    Parameters:
+        forum (Forum): The forum object.
+        mask_name (str): The name of the mask to edit.
+        dictionary (dict): A dictionary containing the forum titles as keys and the desired permissions as values.
+            Each value is a string containing the characters v, r, and/or c.
+            V = View
+            R = Reply
+            C = Create Thread
+            If a character appears in the string, that permission will be granted.
+            e.g. "vr" will grant "View" and "Reply" permissions, but not "Create Thread."
+            A blank string will grant no permissions.
+        overwrite (bool, optional): Whether to overwrite and remove existing permissions not specified by the dictionary keys.
+            If set to True, this is equivalent to setting all other permissions as blank/not allowed for any forum not specified in the dictionary.
+            Defaults to False.
+    """
     # from masks page, locate and click edit button
     driver = forum.driver
+    # TODO: check if on mask page
     n = 1
     while True:
         try:
@@ -287,8 +415,17 @@ def edit_member_masks(forum):
 
 
 def navigate_edit_filters(forum):
+    """
+    Navigates to the "Word Filters" page in the Admin CP.
+
+    Args:
+        forum: The forum object.
+
+    Returns:
+        None
+    """
+    goto_admin_cp(forum)
     driver = forum.driver
-    login(forum, forum.bot, admin=True)
     filter_page = driver.find_element(By.LINK_TEXT, "Word Filters")
     filter_page.send_keys(Keys.ENTER)
     iframe = driver.find_elements(By.TAG_NAME, 'iframe')[0]
@@ -296,8 +433,23 @@ def navigate_edit_filters(forum):
 
 
 def add_filter(word_to_change, new_word, forum, mode=0):
-    # mode 0 is Full Word Only, mode 1 is Containing Word
+    """
+    Adds a filter to the forum's settings.
+
+    Parameters:
+        word_to_change (str): The word to be changed by the filter.
+        new_word (str): The new word that will replace the old word in the filter.
+        forum (Forum): The forum object representing the forum to add the filter to.
+        mode (int, optional): The mode of the filter. 0 for Full Word Only, 1 for Containing Word.
+            Defaults to 0.
+
+    Returns:
+        None
+    """
+    goto_admin_cp(forum)
     driver = forum.driver
+    if "filters.asp" not in driver.current_url:
+        navigate_edit_filters(forum)
     text_boxes = driver.find_elements(By.XPATH, "//input[@type='text']")
     word1 = text_boxes[0]
     word2 = text_boxes[1]
@@ -316,7 +468,18 @@ def remove_filters(forum):
     pass
 
 
-def add_filters(filter_dictionary, forum, mode=0):
+def add_filters(filter_dictionary: dict, forum: Forum, mode: int=0):
+    """
+    Adds filters to a forum based on a filter dictionary.
+
+    Args:
+        filter_dictionary (dict): A dictionary containing filter keys (original word) and values (new word).
+        forum (Forum): The forum object where the filters will be added.
+        mode (int, optional): The mode of the filter. Defaults to 0.
+
+    Returns:
+        None
+    """
     # filters should be in key value pairs
     for item in filter_dictionary:
         add_filter(item, filter_dictionary[item], forum, mode)
