@@ -1,0 +1,10 @@
+Set the Board object's time_setting variable according to the board's Date Format in the Admin CP.
+
+For now, Display Seconds must always be ON and Relative Time must always be OFF for any time-parsing related functions to work.
+
+1 = 13th Aug 2022 5:34:01 PM
+2 = Saturday 13th August 2022, 5:34:01 PM
+3 = 13/08/2022 5:34:01 PM
+4 = 13/08/2022 17:34:01
+5 = 08/13/2022 5:34:01 PM
+6 = 08/13/2022 17:34:01
