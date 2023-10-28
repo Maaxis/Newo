@@ -23,7 +23,7 @@ class Snowflake:
         """
         Generate a snowflake.
 
-        Parameters:
+        Args:
             self (obj): The current object instance.
 
         Returns:
@@ -68,7 +68,7 @@ class Person(Snowflake):
     def __init__(self, game: Game = None, primary_group: str = None, discord_generic_role: discord.Role = None):
         """
         Initializes a new instance of the class.
-        Parameters:
+        Args:
             game (Game, optional): The game object. Defaults to None.
             primary_group (str, optional): The primary group. Defaults to None.
             discord_generic_role (discord.Role, optional): The Discord generic role. Defaults to None.
@@ -145,7 +145,7 @@ class Player(Person):
         """
         Set the juror's placement and update the permissions.
 
-        Parameters:
+        Args:
             placement (int): The placement of the juror.
 
         Returns:
@@ -161,7 +161,7 @@ class Player(Person):
         """
         Sets the prejuror for the given placement.
 
-        Parameters:
+        Args:
             placement (int): The placement of the prejuror.
 
         Returns:
@@ -224,7 +224,7 @@ class Confessional(Snowflake):
         """
         Initializes an instance of the class.
 
-        Parameters:
+        Args:
             subdomain (str): The subdomain of the instance.
             owner (Player, optional): The owner of the instance. Defaults to None.
             channel (discord.TextChannel, optional): The Discord channel of the instance. Defaults to None.
@@ -248,7 +248,7 @@ class Viewer(Person):
         """
         Initializes the object.
 
-        Parameters:
+        Args:
             None
 
         Returns:
@@ -389,7 +389,7 @@ def return_password(subdomain):
     """
     Return the password for the given subdomain.
 
-    Parameters:
+    Args:
         subdomain (str): The subdomain for which the password is needed.
 
     Returns:
@@ -405,7 +405,7 @@ def create_tribe(game: Game, name: str):
     """
     Create a new tribe and add it to the game.
 
-    Parameters:
+    Args:
         game (Game): The game object.
         name (str): The name of the tribe.
 
@@ -474,7 +474,7 @@ def set_tribes_given_names(game: Game, **names):
     """
     Sets tribes for players based on their names.
 
-    Parameters:
+    Args:
         game (Game): The game object containing the players and tribes.
         **names (dict): The names of the players and the corresponding tribe names.
 

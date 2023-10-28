@@ -32,7 +32,7 @@ class User:
         """
         Initializes a new instance of the class.
 
-        Parameters:
+        Args:
             subdomain (str): The subdomain for the instance.
             id (int, optional): The ID for the instance. Defaults to None.
             username (str, optional): The username for the instance. Defaults to None.
@@ -145,7 +145,7 @@ def make_thread(forum: Forum, forum_id: int, thread_title: str, post_content: st
                 poll: bool = False, poll_question: str = "", poll_options: [str] = None, poll_num_of_options: int = 0,
                 poll_num_of_votes: int = 0):
     """
-    Creates a new thread in the specified forum with the given parameters.
+    Creates a new thread in the specified forum with the given Args.
 
     Args:
         forum (Forum): The forum object representing the forum where the thread will be created.
@@ -286,7 +286,7 @@ def edit_mask(forum, mask_name, dictionary, overwrite=False):
     """
     Edits a mask on the forum.
 
-    Parameters:
+    Args:
         forum (Forum): The forum object.
         mask_name (str): The name of the mask to edit.
         dictionary (dict): A dictionary containing the forum titles as keys and the desired permissions as values.
@@ -436,7 +436,7 @@ def add_filter(word_to_change, new_word, forum, mode=0):
     """
     Adds a filter to the forum's settings.
 
-    Parameters:
+    Args:
         word_to_change (str): The word to be changed by the filter.
         new_word (str): The new word that will replace the old word in the filter.
         forum (Forum): The forum object representing the forum to add the filter to.
