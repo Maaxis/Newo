@@ -36,7 +36,7 @@ class Game(Snowflake):
     # abstract information about a game and its associated features
     def __init__(self, name: str, subdomain: str, players: list['Player'] = None, tribes: list['Tribe'] = None,
                  hosts: list['Person'] = None,
-                 server: 'discord.Guild' = None, forum: 'forum' = None):
+                 server: 'discord.Guild' = None, forum: 'Forum' = None):
         """
         Initializes a new instance of the class.
         Args:
@@ -46,7 +46,7 @@ class Game(Snowflake):
             tribes (list['Tribe'], optional): The list of tribes. Defaults to None.
             hosts (list['Person'], optional): The list of hosts. Defaults to None.
             server ('discord.Guild', optional): The Discord server object. Defaults to None.
-            forum ('forum', optional): The forum object. Defaults to None.
+            forum ('Forum', optional): The forum object. Defaults to None.
         """
         super().__init__(prefix="g-")
         self.name = name
