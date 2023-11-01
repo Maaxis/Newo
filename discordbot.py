@@ -1,9 +1,9 @@
-import org
+# import org
 from personality import personality
 import ndimtools as ndim
-from ndtimtools import User
+# from ndimtools import User
 import discord
-from discord.ext import commands
+# from discord.ext import commands
 from discord import app_commands
 # import chat_exporter
 import urllib.request
