@@ -4,20 +4,22 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+import datetime
+import math
 # import org
 
 
 class Forum:
 	def __init__(self, subdomain: str, time_setting: int = 1, users: list['User'] = None, bot: 'Bot' = None):
 		"""
-        Initializes a new forum instance.
+		Initializes a new forum instance.
 
-        Args:
-            subdomain (str): The subdomain (e.g. "void")
-            time_setting (int, optional): The time setting for the forum (see time_setting.txt). Defaults to 1
-            users (type, optional): A list of Users. Defaults to None
-            bot (type, optional): User account for bot. Defaults None.
-        """
+		Args:
+			subdomain (str): The subdomain (e.g. "void")
+			time_setting (int, optional): The time setting for the forum (see time_setting.txt). Defaults to 1
+			users (type, optional): A list of Users. Defaults to None
+			bot (type, optional): User account for bot. Defaults None.
+		"""
 		self.subdomain = subdomain
 		self.driver = start_driver()
 		self.time_setting = time_setting  # see time_setting.txt for how to set this correctly
@@ -28,20 +30,20 @@ class Forum:
 
 class User:
 	def __init__(self, subdomain: str, _id: int = None, username: str = None, password: str = None,
-	             masks: list['Mask'] = None, avatar: str = None, display_name: str = None, group: 'Group' = None):
+				 masks: list['Mask'] = None, avatar: str = None, display_name: str = None, group: 'Group' = None):
 		"""
-        Initializes a new instance of the class.
+		Initializes a new instance of the class.
 
-        Args:
-            subdomain (str): The subdomain for the instance.
-            _id (int, optional): The ID for the instance. Defaults to None.
-            username (str, optional): The username for the instance. Defaults to None.
-            password (str, optional): The password for the instance. Defaults to None.
-            masks (list[Mask], optional): The masks for the instance. Defaults to None.
-            avatar (str, optional): The avatar for the instance. Defaults to None.
-            display_name (str, optional): The display name for the instance. Defaults to None.
-            group (Group, optional): The group for the instance. Defaults to None.
-        """
+		Args:
+			subdomain (str): The subdomain for the instance.
+			_id (int, optional): The ID for the instance. Defaults to None.
+			username (str, optional): The username for the instance. Defaults to None.
+			password (str, optional): The password for the instance. Defaults to None.
+			masks (list[Mask], optional): The masks for the instance. Defaults to None.
+			avatar (str, optional): The avatar for the instance. Defaults to None.
+			display_name (str, optional): The display name for the instance. Defaults to None.
+			group (Group, optional): The group for the instance. Defaults to None.
+		"""
 		self.subdomain = subdomain
 		self.id = _id  # id is not required since we can also premake the object for preregistering
 		self.username = username
@@ -76,11 +78,11 @@ class Bot(User):
 
 def start_driver():
 	"""
-    Starts the driver and navigates to the Google homepage.
+	Starts the driver and navigates to the Google homepage.
 
-    Returns:
-        driver (WebDriver): The initialized WebDriver object.
-    """
+	Returns:
+		driver (WebDriver): The initialized WebDriver object.
+	"""
 	chrome_options = Options()
 	chrome_options.add_argument('--no-sandbox')
 	chrome_options.add_argument('--use-gl=desktop')
@@ -96,19 +98,60 @@ def setup():  # use this for first-time logins
 	start_driver()
 
 
+
+def parseTime(unformatted_time):
+	months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October',
+	          'November', 'December']
+	monthsShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug,', 'Sep', 'Oct', 'Nov', 'Dec']
+	time = ""
+	numMonth = ""
+	if "day" in unformatted_time:
+		time = unformatted_time.split("day ")[1]
+	else:
+		time = unformatted_time
+	for month in months:
+		if month in time:
+			numMonth = (months.index(month)) + 1
+	for month in monthsShort:
+		if month in time:
+			numMonth = (monthsShort.index(month)) + 1
+#    date = time.split(", ")[0]
+	gimmeTheDay = time.split(" ")
+#    gimmeTheDay = date.split(" ")
+	day = gimmeTheDay[0].replace('th','').replace('st','').replace('nd','').replace('rd','')
+	month = str(numMonth)
+#    year = gimmeTheDay[-1]
+	year = gimmeTheDay[2]
+	gimmeTheTime = time.split(":")
+	unformatted_hour = gimmeTheTime[0].split(" ")[-1]
+	min = gimmeTheTime[1]
+	sec = gimmeTheTime[2].split(" ")[0]
+	if "PM" in time:
+		if unformatted_hour == "12":
+			hour = unformatted_hour
+		else:
+			hour = str(int(unformatted_hour) + 12)
+	else:
+		hour = unformatted_hour
+	fullTime = year + "-" + month + "-" + day + " " + hour + ":" + min + ":" + sec
+	# + "-" + month + "-" + day + " " + hour + ":" + min + ":" + sec
+#    print(fullTime)
+	date_time_obj = datetime.datetime.strptime(fullTime, '%Y-%m-%d %H:%M:%S')
+	return(date_time_obj)
+
 def login(forum, user, admin=False):
 	"""
-    Logs in to the forum using the provided credentials.
+	Logs in to the forum using the provided credentials.
 
-    Args:
-        forum (Forum): The forum object representing the forum to log in to.
-        user (User): The user object representing the user to log in as.
-        admin (bool, optional): A flag indicating whether to log in to the Admin CP.
-            Defaults to False.
+	Args:
+		forum (Forum): The forum object representing the forum to log in to.
+		user (User): The user object representing the user to log in as.
+		admin (bool, optional): A flag indicating whether to log in to the Admin CP.
+			Defaults to False.
 
-    Returns:
-        None
-    """
+	Returns:
+		None
+	"""
 	driver = forum.driver
 	if admin:
 		driver.get(forum.url + '/Admin/admincp.asp')
@@ -125,64 +168,64 @@ def login(forum, user, admin=False):
 
 def navigate_forum(forum: Forum, forum_id):
 	"""
-    Navigates to a specific forum in the provided Forum object.
+	Navigates to a specific forum in the provided Forum object.
 
-    Args:
-        forum (Forum): The Forum object containing the necessary driver and URL.
-        forum_id (int): The ID of the forum to navigate to.
+	Args:
+		forum (Forum): The Forum object containing the necessary driver and URL.
+		forum_id (int): The ID of the forum to navigate to.
 
-    Returns:
-        None
-    """
+	Returns:
+		None
+	"""
 	driver = forum.driver
 	url = forum.url + '/forum.asp?forumid=' + str(forum_id)
 	driver.get(url)
 
 
 def make_thread(forum: Forum, forum_id: int, thread_title: str, post_content: str, thread_description: str = "",
-                locked: bool = False,
-                pinned: bool = False,
-                poll: bool = False, poll_question: str = "", poll_options: [str] = None, poll_num_of_options: int = 0,
-                poll_num_of_votes: int = 0):
+				locked: bool = False,
+				pinned: bool = False,
+				poll: bool = False, poll_question: str = "", poll_options: [str] = None, poll_num_of_options: int = 0,
+				poll_num_of_votes: int = 0):
 	"""
-    Creates a new thread in the specified forum with the given parameters.
+	Creates a new thread in the specified forum with the given parameters.
 
-    Args:
-        forum (Forum): The forum object representing the forum where the thread will be created.
-        forum_id (int): The ID of the forum where the thread will be created.
-        thread_title (str): The title of the new thread.
-        post_content (str): The content of the initial post in the thread.
-        thread_description (str, optional): The description of the new thread (default: "").
-        locked (bool, optional): Whether the new thread should be locked (default: False).
-        pinned (bool, optional): Whether the new thread should be pinned (default: False).
-        poll (bool, optional): Whether the new thread should have a poll (default: False).
-        poll_question (str, optional): The question for the poll (default: "").
-        poll_options (list[str], optional): The options for the poll (default: None).
-        poll_num_of_options (int, optional): The number of options for the poll (default: 0).
-        poll_num_of_votes (int, optional): The number of votes for the poll (default: 0).
+	Args:
+		forum (Forum): The forum object representing the forum where the thread will be created.
+		forum_id (int): The ID of the forum where the thread will be created.
+		thread_title (str): The title of the new thread.
+		post_content (str): The content of the initial post in the thread.
+		thread_description (str, optional): The description of the new thread (default: "").
+		locked (bool, optional): Whether the new thread should be locked (default: False).
+		pinned (bool, optional): Whether the new thread should be pinned (default: False).
+		poll (bool, optional): Whether the new thread should have a poll (default: False).
+		poll_question (str, optional): The question for the poll (default: "").
+		poll_options (list[str], optional): The options for the poll (default: None).
+		poll_num_of_options (int, optional): The number of options for the poll (default: 0).
+		poll_num_of_votes (int, optional): The number of votes for the poll (default: 0).
 
-    TODO: set up polls
-    """
+	TODO: set up polls
+	"""
 	driver = forum.driver
 	driver.get(forum.url + '/newthread.asp?forumid=' + str(forum_id))
 	title_box = driver.find_element(By.XPATH,
-	                                "//*[@id=\"sendform\"]/div/table/tbody/tr[2]/td/table/tbody/tr[1]/td[2]/input")
+									"//*[@id=\"sendform\"]/div/table/tbody/tr[2]/td/table/tbody/tr[1]/td[2]/input")
 	description_box = driver.find_element(By.XPATH,
-	                                      "//*[@id=\"sendform\"]/div/table/tbody/tr[2]/td/table/tbody/tr[2]/td[2]/input")
+										  "//*[@id=\"sendform\"]/div/table/tbody/tr[2]/td/table/tbody/tr[2]/td[2]/input")
 	post_box = driver.find_element(By.ID, "fullreply")
 	title_box.send_keys(thread_title)
 	description_box.send_keys(thread_description)
 	post_box.send_keys(post_content)
 	if locked:
 		lock = driver.find_element(By.XPATH,
-		                           "//*[@id=\"sendform\"]/div/table/tbody/tr[2]/td/table/tbody/tr["
-		                           "6]/td/table/tbody/tr/td[1]/input")
+								   "//*[@id=\"sendform\"]/div/table/tbody/tr[2]/td/table/tbody/tr["
+								   "6]/td/table/tbody/tr/td[1]/input")
 		lock.send_keys(Keys.ENTER)
 		lock.click()
 	if pinned:
 		pin = driver.find_element(By.XPATH,
-		                          "//*[@id=\"sendform\"]/div/table/tbody/tr[2]/td/table/tbody/tr["
-		                          "6]/td/table/tbody/tr/td[2]/input")
+								  "//*[@id=\"sendform\"]/div/table/tbody/tr[2]/td/table/tbody/tr["
+								  "6]/td/table/tbody/tr/td[2]/input")
 		pin.send_keys(Keys.ENTER)
 		pin.click()
 	create = driver.find_element(By.XPATH, "//*[@id=\"sendform\"]/div/table/tbody/tr[2]/td/table/tbody/tr[7]/td/input")
@@ -202,20 +245,20 @@ def navigate_thread(forum, thread_id):
 
 def make_post(forum, post_content, thread_id=None):
 	"""
-    Make a post on a forum.
+	Make a post on a forum.
 
-    Args:
-        forum: The forum object.
-        post_content: The content of the post.
-        thread_id: (optional) The ID of the thread to post in. If left blank, it will attempt to
-            post on the current page.
+	Args:
+		forum: The forum object.
+		post_content: The content of the post.
+		thread_id: (optional) The ID of the thread to post in. If left blank, it will attempt to
+			post on the current page.
 
-    Returns:
-        None
+	Returns:
+		None
 
-    Note:
-        The thread URL is constructed using the forum subdomain and the thread ID.
-    """
+	Note:
+		The thread URL is constructed using the forum subdomain and the thread ID.
+	"""
 	driver = forum.driver
 	thread = f"ndimforums.com/{forum.subdomain}/thread.asp?threadid={thread_id}"
 	if (thread_id) and (thread not in driver.current_url):
@@ -247,30 +290,21 @@ def navigate_in_admin_cp(forum, menu_item):
 
 
 def navigate_masks(forum: Forum):
-	"""
-    Navigates to the mask page on the specified forum.
-
-    Args:
-        forum (Forum): The name of the forum to navigate to.
-
-    Returns:
-        None
-    """
 	navigate_in_admin_cp(forum, "Forum Masks")
 
 
 def create_mask(forum, mask_name, dictionary):
 	"""
-    Create a mask in the forum.
+	Create a mask in the forum.
 
-    Args:
-        forum (Forum): The forum object.
-        mask_name (str): The name of the mask to be created.
-        dictionary (dict): A dictionary containing the mask values.
+	Args:
+		forum (Forum): The forum object.
+		mask_name (str): The name of the mask to be created.
+		dictionary (dict): A dictionary containing the mask values.
 
-    Returns:
-        None
-    """
+	Returns:
+		None
+	"""
 	navigate_masks(forum)
 	driver = forum.driver
 	# test_dict = {
@@ -290,23 +324,23 @@ def create_mask(forum, mask_name, dictionary):
 
 def edit_mask(forum, mask_name, dictionary, overwrite=False):
 	"""
-    Edits a mask on the forum.
+	Edits a mask on the forum.
 
-    Parameters:
-        forum (Forum): The forum object.
-        mask_name (str): The name of the mask to edit.
-        dictionary (dict): A dictionary containing the forum titles as keys and the desired permissions as values.
-            Each value is a string containing the characters v, r, and/or c.
-            V = View
-            R = Reply
-            C = Create Thread
-            If a character appears in the string, that permission will be granted.
-            e.g. "vr" will grant "View" and "Reply" permissions, but not "Create Thread."
-            A blank string will grant no permissions.
-        overwrite (bool, optional): Whether to overwrite and remove existing permissions not specified by the dictionary keys.
-            If set to True, this is equivalent to setting all other permissions as blank/not allowed for any forum not specified in the dictionary.
-            Defaults to False.
-    """
+	Parameters:
+		forum (Forum): The forum object.
+		mask_name (str): The name of the mask to edit.
+		dictionary (dict): A dictionary containing the forum titles as keys and the desired permissions as values.
+			Each value is a string containing the characters v, r, and/or c.
+			V = View
+			R = Reply
+			C = Create Thread
+			If a character appears in the string, that permission will be granted.
+			e.g. "vr" will grant "View" and "Reply" permissions, but not "Create Thread."
+			A blank string will grant no permissions.
+		overwrite (bool, optional): Whether to overwrite and remove existing permissions not specified by the dictionary keys.
+			If set to True, this is equivalent to setting all other permissions as blank/not allowed for any forum not specified in the dictionary.
+			Defaults to False.
+	"""
 	# from masks page, locate and click edit button
 	driver = forum.driver
 	navigate_masks(forum)
@@ -314,7 +348,7 @@ def edit_mask(forum, mask_name, dictionary, overwrite=False):
 	while True:
 		try:
 			ele = driver.find_element(By.XPATH,
-			                          f"//*[@id=\"admin0\"]/table/tbody/tr[4]/td/table/tbody/tr[{n}]/td[1]").text
+									  f"//*[@id=\"admin0\"]/table/tbody/tr[4]/td/table/tbody/tr[{n}]/td[1]").text
 			if ele == mask_name:
 				break
 		except NoSuchElementException:
@@ -322,7 +356,7 @@ def edit_mask(forum, mask_name, dictionary, overwrite=False):
 			break
 		n = n + 1
 	edit_button = driver.find_element(By.XPATH,
-	                                  f"//*[@id=\"admin0\"]/table/tbody/tr[4]/td/table/tbody/tr[{n}]/td[2]/input")
+									  f"//*[@id=\"admin0\"]/table/tbody/tr[4]/td/table/tbody/tr[{n}]/td[2]/input")
 	edit_button.click()
 	# test_dict = {
 	#	"my forum": "",
@@ -338,7 +372,7 @@ def edit_mask(forum, mask_name, dictionary, overwrite=False):
 	while True:
 		try:
 			ele = driver.find_element(By.XPATH,
-			                          f"// *[ @ id = \"admin0\"] / table / tbody / tr[{j}] / td / table / tbody / tr[{n}] / td[1]").text
+									  f"// *[ @ id = \"admin0\"] / table / tbody / tr[{j}] / td / table / tbody / tr[{n}] / td[1]").text
 			headers.append(ele.lower())
 			n = n + 1
 		except NoSuchElementException:
@@ -380,9 +414,6 @@ def edit_mask(forum, mask_name, dictionary, overwrite=False):
 				pass  # TODO: finish overwrite masks
 	save = driver.find_element(By.CLASS_NAME, "buttonstyle")
 	save.click()
-
-
-# driver.get(forum.url)
 
 
 def read_mask(forum, user):
@@ -468,33 +499,24 @@ def edit_member_signature():
 
 
 def navigate_edit_filters(forum):
-	"""
-    Navigates to the "Word Filters" page in the forum.
-
-    Args:
-        forum: The forum object.
-
-    Returns:
-        None
-    """
 	navigate_in_admin_cp(forum, "Word Filters")
 
 
 def add_filter(word_to_change, new_word, forum, mode=0):
 	# mode 0 is Full Word Only, mode 1 is Containing Word
 	"""
-    Adds a filter to the forum's settings.
+	Adds a filter to the forum's settings.
 
-    Parameters:
-        word_to_change (str): The word to be changed by the filter.
-        new_word (str): The new word that will replace the old word in the filter.
-        forum (Forum): The forum object representing the forum to add the filter to.
-        mode (int, optional): The mode of the filter. 0 for Full Word Only, 1 for Containing Word.
-            Defaults to 0.
+	Parameters:
+		word_to_change (str): The word to be changed by the filter.
+		new_word (str): The new word that will replace the old word in the filter.
+		forum (Forum): The forum object representing the forum to add the filter to.
+		mode (int, optional): The mode of the filter. 0 for Full Word Only, 1 for Containing Word.
+			Defaults to 0.
 
-    Returns:
-        None
-    """
+	Returns:
+		None
+	"""
 	goto_admin_cp(forum)
 	driver = forum.driver
 	if "filters.asp" not in driver.current_url:
@@ -518,17 +540,6 @@ def remove_filters(forum):
 
 
 def add_filters(filter_dictionary: dict, forum: Forum, mode: int = 0):
-	"""
-    Adds filters to a forum based on a filter dictionary.
-
-    Args:
-        filter_dictionary (dict): A dictionary containing filter keys (original word) and values (new word).
-        forum (Forum): The forum object where the filters will be added.
-        mode (int, optional): The mode of the filter. Defaults to 0.
-
-    Returns:
-        None
-    """
 	# filters should be in key value pairs
 	for item in filter_dictionary:
 		add_filter(item, filter_dictionary[item], forum, mode)
@@ -537,9 +548,65 @@ def add_filters(filter_dictionary: dict, forum: Forum, mode: int = 0):
 def overwrite_filters():
 	pass
 
+def pass_bruteforce(url,forumid,requestFile,driver):
+	passFile = "C:/Users/Max/Documents/backups/python/passwords/{}.txt".format(requestFile)
+	passList = open(passFile, "r")
+	driver.get("http://www.ndimforums.com/{}/forumpassword.asp?forumid={}".format(url, forumid))
+	for index, line in enumerate(passList):
+		try:
+			print('Attempted password ' + str(index) + ": " + line, flush=True)
+			passwordField = driver.find_element(By.XPATH,
+												"/html/body/div/form[3]/table/tbody/tr[2]/td/table/tbody/tr[2]/td[2]/input")
+			passwordField.send_keys(line)
+		except:
+			print('Attempted password ' + str(index) + ": " + line, flush=True)
+			print("You're in!")
+			main()
+	print(
+		'Password not cracked. Double-check the dictionary and ensure Chrome is not minimized before trying again.')
+
+def old_read_thread(url,driver):
+	sep = "|"
+	time_list = []
+	newfile = "{}.txt".format(
+		datetime.datetime.now().strftime("%Y-%m-%d %H%M%S"))
+	thread_id = input("thread id: ")
+	pp = 50
+	print("Please wait...", flush=True)
+	post_contents = []
+	post_headers = []
+	post_users = []
+	for current_page in range(1, 100):
+		driver.get("http://www.ndimforums.com/{0}/thread.asp?threadid={1}&pagenum={2}&pp={3}".format(url, thread_id,
+		                                                                                             current_page,
+		                                                                                             str(pp)))
+		for post_num_this_page in range(1, pp+1):
+			try:
+				if post_num_this_page == 1:
+					this_user = driver.find_element(By.CSS_SELECTOR, ('.profile:nth-child(3) span')).text
+				else:
+					offset = post_num_this_page * 4 - 2
+					this_user = driver.find_element(By.CSS_SELECTOR, (f'tr:nth-child({str(offset)}) .profile span')).text
+				post_num_total = post_num_this_page + (pp * (current_page - 1))
+				post_time_unformatted = driver.find_element(By.CSS_SELECTOR, (f'#postheada{str(post_num_this_page)} > b')).text
+				post_time_formatted = parseTime(post_time_unformatted)
+				post_content = driver.find_element(By.ID, (f"post{post_num_this_page}")).text
+				line = f"{this_user:<14}{str(post_time_formatted):<24}Post #{str(post_num_total):<8}{post_content}"
+				post_users.append(this_user)
+				time_list.append(post_time_formatted)
+				post_headers.append(post_num_total)
+				post_contents.append(post_content)
+				with open(newfile, "a") as file:
+					file.write(f"{this_user}{sep}{post_time_formatted}{sep}{post_num_total}{sep}{post_content}" + "\n")
+				print(line, flush=True)
+			except:
+				old_read_thread(url, driver)
+
 
 def main():
-	return Forum(subdomain="void")
+	forum = Forum(subdomain="void5")
+	driver = forum.driver
+	old_read_thread("void5",driver)
 
 
 if __name__ == "__main__":
