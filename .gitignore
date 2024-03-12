@@ -319,6 +319,8 @@ pyrightconfig.json
 *.log
 *.sql
 *.sqlite
+*.db
+data/
 
 # OS generated files #
 ######################

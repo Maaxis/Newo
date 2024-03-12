@@ -77,12 +77,6 @@ class Bot(User):
 
 
 def start_driver():
-	"""
-	Starts the driver and navigates to the Google homepage.
-
-	Returns:
-		driver (WebDriver): The initialized WebDriver object.
-	"""
 	chrome_options = Options()
 	chrome_options.add_argument('--no-sandbox')
 	chrome_options.add_argument('--use-gl=desktop')
@@ -98,28 +92,28 @@ def setup():  # use this for first-time logins
 	start_driver()
 
 
-
-def parseTime(unformatted_time):
+def parse_time(unformatted_time):
+	#TODO: make compatible for all time settings
 	months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October',
 	          'November', 'December']
-	monthsShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug,', 'Sep', 'Oct', 'Nov', 'Dec']
+	months_short = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug,', 'Sep', 'Oct', 'Nov', 'Dec']
 	time = ""
-	numMonth = ""
+	num_month = ""
 	if "day" in unformatted_time:
 		time = unformatted_time.split("day ")[1]
 	else:
 		time = unformatted_time
 	for month in months:
 		if month in time:
-			numMonth = (months.index(month)) + 1
-	for month in monthsShort:
+			num_month = (months.index(month)) + 1
+	for month in months_short:
 		if month in time:
-			numMonth = (monthsShort.index(month)) + 1
+			num_month = (months_short.index(month)) + 1
 #    date = time.split(", ")[0]
 	gimmeTheDay = time.split(" ")
 #    gimmeTheDay = date.split(" ")
 	day = gimmeTheDay[0].replace('th','').replace('st','').replace('nd','').replace('rd','')
-	month = str(numMonth)
+	month = str(num_month)
 #    year = gimmeTheDay[-1]
 	year = gimmeTheDay[2]
 	gimmeTheTime = time.split(":")
@@ -145,7 +139,7 @@ def login(forum, user, admin=False):
 
 	Args:
 		forum (Forum): The forum object representing the forum to log in to.
-		user (User): The user object representing the user to log in as.
+		user (Bot): The user object representing the user to log in as.
 		admin (bool, optional): A flag indicating whether to log in to the Admin CP.
 			Defaults to False.
 
@@ -159,9 +153,9 @@ def login(forum, user, admin=False):
 		driver.get(forum.url + '/login.asp')
 	# username_box = driver.find_element(By.NAME, "username")
 	pw_box = driver.find_element(By.NAME, "pwd")
-	button = driver.find_element(By.XPATH, "/html/body/div/form[3]/table/tbody/tr[2]/td/table/tbody/tr[4]/td/input")
+	button = driver.find_element(By.XPATH, "//input[@value='login']")
 	# username_box.send_keys("Newo")
-	pw = user.password
+	pw = forum.bot.return_password(subdomain=forum.subdomain)
 	pw_box.send_keys(pw)
 	driver.execute_script("arguments[0].click();", button)
 
@@ -239,26 +233,10 @@ def read_thread(forum, thread_id):
 def navigate_thread(forum, thread_id):
 	driver = forum.driver
 	url = forum.url + '/thread.asp?threadid=' + str(thread_id)
-	print(url)
 	driver.get(url)
 
 
 def make_post(forum, post_content, thread_id=None):
-	"""
-	Make a post on a forum.
-
-	Args:
-		forum: The forum object.
-		post_content: The content of the post.
-		thread_id: (optional) The ID of the thread to post in. If left blank, it will attempt to
-			post on the current page.
-
-	Returns:
-		None
-
-	Note:
-		The thread URL is constructed using the forum subdomain and the thread ID.
-	"""
 	driver = forum.driver
 	thread = f"ndimforums.com/{forum.subdomain}/thread.asp?threadid={thread_id}"
 	if (thread_id) and (thread not in driver.current_url):
@@ -283,6 +261,7 @@ def goto_admin_cp(forum):
 def navigate_in_admin_cp(forum, menu_item):
 	goto_admin_cp(forum)
 	driver = forum.driver
+	driver.switch_to.default_content()
 	link = driver.find_element(By.LINK_TEXT, menu_item)
 	link.send_keys(Keys.ENTER)
 	iframe = driver.find_elements(By.TAG_NAME, 'iframe')[0]
@@ -436,7 +415,7 @@ def read_group(forum):
 	pass
 
 
-def preregister_member(forum, user):
+def preregister_member(forum):
 	navigate_in_admin_cp(forum, "Pre-register Member")
 
 
@@ -515,7 +494,8 @@ def add_filter(word_to_change, new_word, forum, mode=0):
 	"""
 	goto_admin_cp(forum)
 	driver = forum.driver
-	if "filters.asp" not in driver.current_url:
+	if not (driver.getPageSource().contains("Add Filters")):
+	#if "filters.asp" not in driver.current_url:
 		navigate_edit_filters(forum)
 	text_boxes = driver.find_elements(By.XPATH, "//input[@type='text']")
 	word1 = text_boxes[0]
@@ -541,28 +521,20 @@ def add_filters(filter_dictionary: dict, forum: Forum, mode: int = 0):
 		add_filter(item, filter_dictionary[item], forum, mode)
 
 
+def add_filters_from_file(forum,filename):
+	with open(filename) as file:
+		for line in file:
+			wordtochange = line.split(",")[0].strip()
+			filter = line.split(",")[1].strip()
+			add_filter(wordtochange,filter,forum)
+
+
 def overwrite_filters():
 	pass
 
-def pass_bruteforce(url,forumid,pass_file_name,driver):
-	pass_file = "{}.txt".format(pass_file_name)
-	pass_list = open(pass_file, "r")
-	driver.get("http://www.ndimforums.com/{}/forumpassword.asp?forumid={}".format(url, forumid))
-	for index, line in enumerate(pass_list):
-		try:
-			print('Attempted password ' + str(index) + ": " + line, flush=True)
-			pass_field = driver.find_element(By.XPATH,
-												"/html/body/div/form[3]/table/tbody/tr[2]/td/table/tbody/tr[2]/td[2]/input")
-			pass_field.send_keys(line)
-		except:
-			print('Attempted password ' + str(index) + ": " + line, flush=True)
-			print("You're in!")
-			main()
-	print(
-		'Password not cracked. Double-check the dictionary and ensure Chrome is not minimized before trying again.')
 
 def old_read_thread(url,driver):
-	sep = "|"
+	sep = "\t"
 	time_list = []
 	newfile = "{}.txt".format(
 		datetime.datetime.now().strftime("%Y-%m-%d %H%M%S"))
@@ -585,7 +557,7 @@ def old_read_thread(url,driver):
 					this_user = driver.find_element(By.CSS_SELECTOR, (f'tr:nth-child({str(offset)}) .profile span')).text
 				post_num_total = post_num_this_page + (pp * (current_page - 1))
 				post_time_unformatted = driver.find_element(By.CSS_SELECTOR, (f'#postheada{str(post_num_this_page)} > b')).text
-				post_time_formatted = parseTime(post_time_unformatted)
+				post_time_formatted = parse_time(post_time_unformatted)
 				post_content = driver.find_element(By.ID, (f"post{post_num_this_page}")).text
 				line = f"{this_user:<14}{str(post_time_formatted):<24}Post #{str(post_num_total):<8}{post_content}"
 				post_users.append(this_user)
@@ -599,10 +571,12 @@ def old_read_thread(url,driver):
 				old_read_thread(url, driver)
 
 
+
+
+
 def main():
 	forum = Forum(subdomain="void5")
-	driver = forum.driver
-	old_read_thread("void5",driver)
+	old_read_thread(forum.subdomain, forum.driver)
 
 
 if __name__ == "__main__":

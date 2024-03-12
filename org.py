@@ -1,6 +1,6 @@
 import random
 import string
-import discord
+from discord import Guild, Role, TextChannel
 from typing import Literal
 
 
