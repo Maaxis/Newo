@@ -13,14 +13,9 @@ from typing import Optional, List, Literal
 import database
 from discord.utils import get
 import random_name
-
+import database as db
 import discord
 from discord.ext import commands
-
-
-
-
-
 
 player_roles = {
     'Aziah': 1201608872457142322,
@@ -55,8 +50,9 @@ class Alliance_Dropdown(discord.ui.Select):
         options = []
         for key, val in player_roles.items():
             options.append(discord.SelectOption(label=key))
+        options.append("Cancel")
         max = len(options)
-        super().__init__(placeholder='Select members of the alliance chat', min_values=1, max_values=max, options=options)
+        super().__init__(placeholder='Select members of the alliance chat', min_values=1, max_values=max+1, options=options)
 
     async def callback(self, interaction: discord.Interaction):
         alliance_members = self.values
@@ -79,9 +75,11 @@ class Alliance_Dropdown(discord.ui.Select):
                 if role not in alliance_member_roles:
                     alliance_member_roles.append(role)
                 break
+        role_ids = []
         overwrites[host_role] = discord.PermissionOverwrite(read_messages=True)
         for role in alliance_member_roles:
             overwrites[role] = discord.PermissionOverwrite(read_messages=True)
+            role_ids.append(role.id)
         ViewersCanReadAlliances = True
         if ViewersCanReadAlliances:
             overwrites[viewer_role] = discord.PermissionOverwrite(read_messages=True, send_messages=False)
@@ -92,6 +90,10 @@ class Alliance_Dropdown(discord.ui.Select):
         for role in alliance_member_roles:
             intro_text += (role.mention + " ")
         await alliance_channel.send(intro_text + f"created by {creator}.")
+        print(alliance_member_roles)
+        player_ids = db.get_array_of_ids_from_array_of_discord_roles(role_ids)
+        print(player_ids)
+        db.add_alliance(name=self.alliance_name, players=player_ids, discord_channel_id=alliance_channel.id, archived=False)
         await interaction.followup.send(f"Done! <#{alliance_channel.id}>")
 
 class DropdownView(discord.ui.View):
@@ -100,6 +102,26 @@ class DropdownView(discord.ui.View):
         alliance_name = alliance_name
         self.add_item(Alliance_Dropdown(alliance_name=alliance_name))
 
+class Confirm(discord.ui.View):
+    def __init__(self):
+        super().__init__()
+        self.value = None
+
+    # When the confirm button is pressed, set the inner value to `True` and
+    # stop the View from listening to more input.
+    # We also send the user an ephemeral message that we're confirming their choice.
+    @discord.ui.button(label='Confirm', style=discord.ButtonStyle.green)
+    async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message('Confirming', ephemeral=True)
+        self.value = True
+        self.stop()
+
+    # This one is similar to the confirmation button except sets the inner value to `False`
+    @discord.ui.button(label='Cancel', style=discord.ButtonStyle.grey)
+    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message('Cancelling', ephemeral=True)
+        self.value = False
+        self.stop()
 
 
 def get_token():
@@ -150,6 +172,7 @@ async def ping(interaction: discord.Interaction):
 
 @bot.tree.command()
 async def alliance(interaction: discord.Interaction, name: Optional[str] = None):
+    """Creates a private channel for an alliance."""
     view = DropdownView(alliance_name=name)
     await interaction.response.send_message("Select alliance members", view=view)
 

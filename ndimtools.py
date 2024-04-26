@@ -570,9 +570,12 @@ def old_read_thread(url,driver):
 			except:
 				old_read_thread(url, driver)
 
-
-
-
+def addfiltersfromfile(forum,filename):
+	with open(filename) as file:
+		for line in file:
+			wordtochange = line.split(",")[0].strip()
+			filter = line.split(",")[1].strip()
+			add_filter(wordtochange,filter,forum)
 
 def main():
 	forum = Forum(subdomain="void5")
