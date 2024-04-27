@@ -1,21 +1,11 @@
-# import org
-# from personality import personality
-# from ndimtools import User
 import discord
-# from discord.ext import commands
+from discord.ext import commands
 from discord import app_commands
-# import chat_exporter
-# import urllib.request
 import logging
-# import random
-# import typing
 from typing import Optional, List, Literal
-import database
 from discord.utils import get
 import random_name
 import database as db
-import discord
-from discord.ext import commands
 
 player_roles = {
     'Aziah': 1201608872457142322,
@@ -28,31 +18,39 @@ player_roles = {
     'Shrek': 1201608896289190038
 }
 
-def player_roles_setup():
-    pass
-
 test_guild = discord.Object(id=1201608522975150152)  # replace with your guild id
 bot_admin = 119117540818550786
 debug_mode = True
 beta_mode = True
 
-player_roles_setup()
-
 def get_role_from_id(guild, role_id):
     role = get(guild.roles, id=role_id)
     return role
 
+
+
+def get_players_as_literal():
+    return Literal["Aziah", "Billy", "Kingston", "Lorelei", "Nichelle", "Oregano", "Prue", "Shrek"]
+
+def get_role_from_name_string():
+    pass
+
+def find_key_by_value(value):
+    for key, val in player_roles.items():
+        if val == value:
+            return key
+    return None
+
 #alliance_category = get(guild.categories, id=1201610117267853322)
 
-class Alliance_Dropdown(discord.ui.Select):
+class AllianceCreator(discord.ui.Select):
     def __init__(self, alliance_name=None):
         self.alliance_name = alliance_name
         options = []
         for key, val in player_roles.items():
             options.append(discord.SelectOption(label=key))
-        options.append("Cancel")
         max = len(options)
-        super().__init__(placeholder='Select members of the alliance chat', min_values=1, max_values=max+1, options=options)
+        super().__init__(placeholder='Select members of the alliance chat', min_values=1, max_values=max, options=options)
 
     async def callback(self, interaction: discord.Interaction):
         alliance_members = self.values
@@ -67,7 +65,7 @@ class Alliance_Dropdown(discord.ui.Select):
                 alliance_member_roles.append(role)
         overwrites = {
             this_guild.default_role: discord.PermissionOverwrite(read_messages=False)
-        }
+        } # default permission cannot view channel
         creator = interaction.user.mention
         for role in interaction.user.roles:
             if role.id in player_roles.values():
@@ -91,38 +89,16 @@ class Alliance_Dropdown(discord.ui.Select):
             intro_text += (role.mention + " ")
         await alliance_channel.send(intro_text + f"created by {creator}.")
         print(alliance_member_roles)
-        player_ids = db.get_array_of_ids_from_array_of_discord_roles(role_ids)
+        player_ids = db.get_snowflakes_from_discord_roles(role_ids)
         print(player_ids)
         db.add_alliance(name=self.alliance_name, players=player_ids, discord_channel_id=alliance_channel.id, archived=False)
         await interaction.followup.send(f"Done! <#{alliance_channel.id}>")
 
-class DropdownView(discord.ui.View):
+class AllianceCreatorInit(discord.ui.View):
     def __init__(self, alliance_name=None):
         super().__init__()
         alliance_name = alliance_name
-        self.add_item(Alliance_Dropdown(alliance_name=alliance_name))
-
-class Confirm(discord.ui.View):
-    def __init__(self):
-        super().__init__()
-        self.value = None
-
-    # When the confirm button is pressed, set the inner value to `True` and
-    # stop the View from listening to more input.
-    # We also send the user an ephemeral message that we're confirming their choice.
-    @discord.ui.button(label='Confirm', style=discord.ButtonStyle.green)
-    async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message('Confirming', ephemeral=True)
-        self.value = True
-        self.stop()
-
-    # This one is similar to the confirmation button except sets the inner value to `False`
-    @discord.ui.button(label='Cancel', style=discord.ButtonStyle.grey)
-    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message('Cancelling', ephemeral=True)
-        self.value = False
-        self.stop()
-
+        self.add_item(AllianceCreator(alliance_name=alliance_name))
 
 def get_token():
     t = ""
@@ -152,19 +128,6 @@ class BotClient(discord.Client):
 intents = discord.Intents(messages=True, guilds=True, members=True)
 bot = BotClient(_intents=intents)
 
-
-def get_players_as_literal():
-    return Literal["Aziah", "Billy", "Kingston", "Lorelei", "Nichelle", "Oregano", "Prue", "Shrek"]
-
-def get_role_from_name_string():
-    pass
-
-def find_key_by_value(value):
-    for key, val in player_roles.items():
-        if val == value:
-            return key
-    return None
-
 @bot.tree.command()
 async def ping(interaction: discord.Interaction):
     """Test Newo's responsiveness."""
@@ -173,10 +136,32 @@ async def ping(interaction: discord.Interaction):
 @bot.tree.command()
 async def alliance(interaction: discord.Interaction, name: Optional[str] = None):
     """Creates a private channel for an alliance."""
-    view = DropdownView(alliance_name=name)
+    view = AllianceCreatorInit(alliance_name=name)
     await interaction.response.send_message("Select alliance members", view=view)
 
+@bot.tree.command()
+async def tribes(interaction: discord.Interaction):
+    """Lists current tribes."""
+    tribes = db.list_tribes()
+    # returns [[tribe1, [p1, p2, p3, ...], [tribe2, [p1, p2, p3, ...]...]]
+    msg = ""
+    for tribe in tribes:
+        tribe_snowflake = tribe[0]
+        tribe_name = db.get_tribe_name_from_snowflake(tribe_snowflake)
+        msg = msg + f"**{tribe_name}**: "
+        players = tribe[1]
+        for player in players:
+            player_name = db.get_player_name_from_snowflake(player)
+            msg = msg + f"{player_name} "
+        msg = msg + "\n"
+    await interaction.response.send_message(msg)
 
+
+@bot.tree.command()
+async def player(interaction: discord.Interaction, name: str, discord_role_id: int = None, confessional: str = None, tribe: str = None, contestant: bool = True, jury: bool = False, prejury: bool = False, placement: int = None):
+    #if confessional == None:
+    db.add_player(name, discord_role_id, confessional, tribe, contestant, jury, prejury, placement)
+    await interaction.response.send_message("Done")
 
 
 
@@ -185,57 +170,6 @@ async def alliance(interaction: discord.Interaction, name: Optional[str] = None)
 async def on_ready():
     print(f'Logged in as {bot.user} (ID: {bot.user.id})')
     print('------')
-
-
-@bot.tree.command()
-async def hello(interaction: discord.Interaction):
-    """Says hello!"""
-    await interaction.response.send_message(f'Hi, {interaction.user.mention}')
-
-
-@bot.tree.command()
-@app_commands.describe(
-    first_value='The first value you want to add something to',
-    second_value='The value you want to add to the first value',
-)
-async def add(interaction: discord.Interaction, first_value: int, second_value: int):
-    """Adds two numbers together."""
-    await interaction.response.send_message(f'{first_value} + {second_value} = {first_value + second_value}')
-
-
-# The rename decorator allows us to change the display of the parameter on Discord.
-# In this example, even though we use `text_to_send` in the code, the client will use `text` instead.
-# Note that other decorators will still refer to it as `text_to_send` in the code.
-@bot.tree.command()
-@app_commands.rename(text_to_send='text')
-@app_commands.describe(text_to_send='Text to send in the current channel')
-async def send(interaction: discord.Interaction, text_to_send: str):
-    """Sends the text into the current channel."""
-    await interaction.response.send_message(text_to_send)
-
-
-# To make an argument optional, you can either give it a supported default argument
-# or you can mark it as Optional from the typing standard library. This example does both.
-@bot.tree.command()
-@app_commands.describe(member='The member you want to get the joined date from; defaults to the user who uses the command')
-async def joined(interaction: discord.Interaction, member: Optional[discord.Member] = None):
-    """Says when a member joined."""
-    # If no member is explicitly provided then we use the command user here
-    member = member or interaction.user
-
-    # The format_dt function formats the date time into a human readable representation in the official client
-    await interaction.response.send_message(f'{member} joined {discord.utils.format_dt(member.joined_at)}')
-
-
-# A Context Menu command is an app command that can be run on a member or on a message by
-# accessing a menu within the client, usually via right clicking.
-# It always takes an interaction as its first parameter and a Member or Message as its second parameter.
-
-# This context menu command only works on members
-@bot.tree.context_menu(name='Show Join Date')
-async def show_join_date(interaction: discord.Interaction, member: discord.Member):
-    # The format_dt function formats the date time into a human readable representation in the official client
-    await interaction.response.send_message(f'{member} joined at {discord.utils.format_dt(member.joined_at)}')
 
 
 
