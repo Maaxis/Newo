@@ -495,7 +495,7 @@ def test(game, *database, **names):
     for name, tribe in names:
         for obj in database:
             if obj.game == game and obj.name == name and obj.subgroup == 'contender':
-                player_snowflake = obj.snowflakef
+                player_snowflake = obj.snowflake
             #if obj.game == game and obj.name == tribe and obj.
 
 def set_tribes_given_snowflakes(game: Game, **snowflakes):

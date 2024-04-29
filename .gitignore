@@ -318,7 +318,7 @@ pyrightconfig.json
 # Logs and databases #
 ######################
 *.log
-*.sql
+#*.sql
 *.sqlite
 *.db
 data/
@@ -332,3 +332,5 @@ data/
 .Trashes
 ehthumbs.db
 Thumbs.db
+/p4/
+/p3/
