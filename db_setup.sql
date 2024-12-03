@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS Players (
     snowflake VARCHAR(60) PRIMARY KEY,
     name TEXT NOT NULL,
     discord_role_id BIGINT DEFAULT NULL,
+    forum_user_id INT DEFAULT NULL,
     confessional VARCHAR(60) DEFAULT NULL,
     tribe VARCHAR(60) DEFAULT NULL,
     contestant BOOLEAN DEFAULT TRUE,
@@ -36,59 +37,26 @@ CREATE TABLE IF NOT EXISTS Players (
         ON UPDATE CASCADE
 );
 
-DROP TABLE IF EXISTS Alliances;
-CREATE TABLE IF NOT EXISTS Alliances (
-    snowflake VARCHAR(255) PRIMARY KEY,
-    name TEXT,
-    discord_channel_id BIGINT DEFAULT NULL,
-    archived BOOLEAN DEFAULT FALSE
-);
-
-DROP TABLE IF EXISTS Allies;
-CREATE TABLE IF NOT EXISTS Allies (
-    player_id VARCHAR(60),
-    alliance_id VARCHAR(255),
-    PRIMARY KEY (player_id, alliance_id),
-    FOREIGN KEY (player_id) REFERENCES Players(snowflake)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    FOREIGN KEY (alliance_id) REFERENCES Alliances(snowflake)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE
-);
-
 INSERT INTO Tribes (snowflake, name, forum_id, discord_role_id, discord_channel_id) VALUES
-    ('t-voida', 'Voida', NULL, 1201608792102670447, 1201611858503794718),
-    ('t-cyclone', 'Cyclone', NULL, 1201608797513339000, 1201611814891421886);
+    ('t-voida-abcdefgh', 'Voida', 6, 1201608792102670447, 1201611858503794718),
+    ('t-cyclone-abcdefgh', 'Cyclone', 7, 1201608797513339000, 1201611814891421886);
     
 INSERT INTO Confessionals (snowflake, player, discord_channel_id, forum_id, submission_folder, voting_thread_id) VALUES
-    ('c-aziah', 'p-aziah', 1201611930725515314, NULL, NULL, NULL),
-    ('c-oregano', 'p-oregano', 1201612381256691814, NULL, NULL, NULL),
-    ('c-shrek', 'p-shrek', 1201612479332110357, NULL, NULL, NULL),
-    ('c-lorelei', 'p-lorelei', 1201612159294115972, NULL, NULL, NULL),
-    ('c-billy', 'p-billy', 1201611981854093392, NULL, NULL, NULL),
-    ('c-prue', 'p-prue', 1201612430502010980, NULL, NULL, NULL),
-    ('c-kingston', 'p-kingston', 1201612029690122251, NULL, NULL, NULL),
-    ('c-nichelle', 'p-nichelle', 1201612215061581914, NULL, NULL, NULL);
+    ('c-aziah-abcdefgh', 'p-aziah-abcdefgh', 1201611930725515314, 8, 16, 6),
+    ('c-billy-abcdefgh', 'p-billy-abcdefgh', 1201611981854093392, 9, 17, 7),
+    ('c-kingston-abcdefgh', 'p-kingston-abcdefgh', 1201612029690122251, 10, 18, 8),
+    ('c-lorelei-abcdefgh', 'p-lorelei-abcdefgh', 1201612159294115972, 11, 19, 9),
+    ('c-nichelle-abcdefgh', 'p-nichelle-abcdefgh', 1201612215061581914, 12, 20, 10),
+    ('c-oregano-abcdefgh', 'p-oregano-abcdefgh', 1201612381256691814, 13, 21, 11),
+    ('c-prue-abcdefgh', 'p-prue-abcdefgh', 1201612430502010980, 14, 22, 12),
+    ('c-shrek-abcdefgh', 'p-shrek-abcdefgh', 1201612479332110357, 15, 23, 13);
 
-INSERT INTO Players (snowflake, name, discord_role_id, confessional, tribe) VALUES
-    ('p-aziah', 'Aziah', 1201608872457142322, 'c-aziah', 't-voida'),
-    ('p-oregano', 'Oregano', 1201608889976758393, 'c-oregano', 't-voida'),
-    ('p-shrek', 'Shrek', 1201608896289190038, 'c-shrek', 't-voida'),
-    ('p-lorelei', 'Lorelei', 1201608883093917726, 'c-lorelei', 't-voida'),
-    ('p-billy', 'Billy', 1201608876542414848, 'c-billy', 't-cyclone'),
-    ('p-prue', 'Prue', 1201608892933750815, 'c-prue', 't-cyclone'),
-    ('p-kingston', 'Kingston', 1201608879721697322, 'c-kingston', 't-cyclone'),
-    ('p-nichelle', 'Nichelle', 1201608886537425027, 'c-nichelle', 't-cyclone');
-
-INSERT INTO Alliances (snowflake, name, discord_channel_id, archived) VALUES
-     ('a-adventurous-softballs', 'adventurous-softballs', 1233588702941413477, FALSE),
-     ('a-worthy-greases', 'worthy-greases', 1233588835724824638, FALSE);
-
-INSERT INTO Allies (player_id, alliance_id) VALUES
-     ('p-aziah', 'a-adventurous-softballs'),
-     ('p-billy', 'a-adventurous-softballs'),
-     ('p-kingston', 'a-adventurous-softballs'),
-     ('p-kingston', 'a-worthy-greases'),
-     ('p-lorelei', 'a-worthy-greases'),
-     ('p-nichelle', 'a-worthy-greases');
+INSERT INTO Players (snowflake, name, discord_role_id, forum_user_id, confessional, tribe) VALUES
+    ('p-aziah-abcdefgh', 'Aziah', 1201608872457142322, 6, 'c-aziah-abcdefgh', 't-voida-abcdefgh'),
+    ('p-billy-abcdefgh', 'Billy', 1201608876542414848, 12, 'c-billy-abcdefgh', 't-cyclone-abcdefgh'),
+    ('p-kingston-abcdefgh', 'Kingston', 1201608879721697322, 10, 'c-kingston-abcdefgh', 't-cyclone-abcdefgh'),
+    ('p-lorelei-abcdefgh', 'Lorelei', 1201608883093917726, 5, 'c-lorelei-abcdefgh', 't-voida-abcdefgh'),
+    ('p-nichelle-abcdefgh', 'Nichelle', 1201608886537425027, 7, 'c-nichelle-abcdefgh', 't-cyclone-abcdefgh'),
+    ('p-oregano-abcdefgh', 'Oregano', 1201608889976758393, 11, 'c-oregano-abcdefgh', 't-voida-abcdefgh'),
+    ('p-prue-abcdefgh', 'Prue', 1201608892933750815, 8, 'c-prue-abcdefgh', 't-cyclone-abcdefgh'),
+    ('p-shrek-abcdefgh', 'Shrek', 1201608896289190038, 9, 'c-shrek-abcdefgh', 't-voida-abcdefgh');

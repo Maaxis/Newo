@@ -2,16 +2,28 @@ import sqlite3 as sql
 import string
 import random
 
-con = sql.connect("test.db")
+import os
+
+db_filename = os.path.join("default.db")
+con = sql.connect(db_filename)
 cur = con.cursor()
 
+
+def set_db(filename):
+    #global con
+    con = sql.connect(filename)
+    #global cur
+    cur = con.cursor()
+
+
+debug = True
 
 def rand_string(size=8, characters=string.ascii_lowercase + string.digits):
     return "-" + ''.join(random.choice(characters) for _ in range(size))
 
 
 def init_db():
-    setup_file = open('db_setup.sql', 'r')
+    setup_file = open('db_setup_exampleless.sql', 'r')
     setup_sql = setup_file.read()
     setup_file.close()
     cur.executescript(setup_sql)
@@ -21,7 +33,7 @@ def init_db():
 
 
 def add_player(name, discord_role_id=None, confessional=None, tribe=None, contestant=True, jury=False, prejury=False,
-               placement=None):
+               placement=None, forum_user_id=None):
     snowflake = "p-" + name.lower() + rand_string()
     if contestant:
         contestant = 1
@@ -35,11 +47,12 @@ def add_player(name, discord_role_id=None, confessional=None, tribe=None, contes
         prejury = 1
     else:
         prejury = 0
-    cur.execute('''INSERT INTO Players (snowflake, name, discord_role_id, confessional, tribe, contestant, jury, prejury, placement)
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-                (snowflake, name, discord_role_id, confessional, tribe, contestant, jury, prejury, placement))
+    cur.execute('''INSERT INTO Players (snowflake, name, discord_role_id, forum_user_id, confessional, tribe, contestant, jury, prejury, placement)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                (snowflake, name, discord_role_id, forum_user_id, confessional, tribe, contestant, jury, prejury, placement))
     con.commit()
-    print("Committed INSERT INTO Players")
+    if debug:
+        print("Committed INSERT INTO Players")
     return snowflake
 
 
@@ -70,6 +83,15 @@ def get_tribe_roles():
     return [row[0] for row in rows]  # Extract the first element from each tuple
 
 
+def get_player_roles_as_dictionary():
+    cur.execute('''
+    SELECT name, discord_role_id FROM Players
+    ''')
+    rows = cur.fetchall()
+    return {row[0]: row[1] for row in rows}
+
+
+
 def add_alliance(name, players=None, discord_channel_id=None, archived=False):
     # players should be an array of snowflakes
     name_s = "a-" + name.lower() + rand_string()
@@ -94,18 +116,28 @@ def add_alliance(name, players=None, discord_channel_id=None, archived=False):
 				""",
                         (player, name_s))
     con.commit()
-    print("Committed INSERT INTO Alliances, INSERT INTO Allies")
+    if debug:
+        print("Committed INSERT INTO Alliances, INSERT INTO Allies")
     return name_s
 
 
 def add_tribe(name, forum_id=None, discord_role_id=None, discord_channel_id=None):
+    # Check if a tribe with the given discord_role_id already exists
+    cur.execute("SELECT snowflake FROM Tribes WHERE discord_role_id = ?", (discord_role_id,))
+    existing_tribe = cur.fetchone()
+
+    if existing_tribe:
+        if debug:
+            print(f"Tribe with discord_role_id {discord_role_id} already exists. Returning existing snowflake.")
+        return existing_tribe[0]
     name_s = "t-" + name.lower() + rand_string()
     cur.execute("""
 		INSERT INTO Tribes (snowflake, name, forum_id, discord_role_id, discord_channel_id)
 		VALUES (?, ?, ?, ?, ?)
 		""", (name_s, name, forum_id, discord_role_id, discord_channel_id))
     con.commit()
-    print(f"Committed INSERT INTO Tribes")
+    if debug:
+        print(f"Committed INSERT INTO Tribes")
     return name_s
 
 
@@ -113,7 +145,8 @@ def update_player_tribe(player_snowflake, tribe_snowflake):
     cur.execute("UPDATE Players SET tribe = ? WHERE snowflake = ?",
                 (str(tribe_snowflake), str(player_snowflake),))
     con.commit()
-    print(f"Committed UPDATE Players SET tribe = {tribe_snowflake} WHERE snowflake = {player_snowflake}")
+    if debug:
+        print(f"Committed UPDATE Players SET tribe = {tribe_snowflake} WHERE snowflake = {player_snowflake}")
     return
 
 def add_confessional(player_snowflake, player_name="", discord_channel_id=None, forum_id=None, submission_folder=None,
@@ -124,7 +157,8 @@ def add_confessional(player_snowflake, player_name="", discord_channel_id=None, 
 		VALUES (?, ?, ?, ?, ?, ?)
 		""", (name_s, player_snowflake, discord_channel_id, forum_id, submission_folder, voting_thread_id))
     con.commit()
-    print(f"Committed INSERT INTO Confessionals")
+    if debug:
+        print(f"Committed INSERT INTO Confessionals")
     return name_s
 
 
@@ -180,17 +214,16 @@ def update_confessional_with_player_snowflake(confessional_snowflake, player_sno
     cur.execute("UPDATE Confessionals SET player = ? WHERE snowflake = ?",
                 (str(player_snowflake), str(confessional_snowflake),))
     con.commit()
-    print(f"Committed UPDATE Confessionals SET player = {player_snowflake} WHERE snowflake = {confessional_snowflake}")
+    if debug:
+        print(f"Committed UPDATE Confessionals SET player = {player_snowflake} WHERE snowflake = {confessional_snowflake}")
     return
 
 
-def reset_alliance_tables():
-    cur.executescript("""
-	DROP TABLE Alliances;
-	DROP TABLE Allies;
-	""")
-    init_db()
+
+
+def quick_exec():
+    pass
 
 
 if __name__ == '__main__':
-    init_db()
+    quick_exec()
